@@ -4,14 +4,16 @@ import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { map } from 'rxjs/operators';
 
+import { environment } from "../../environments/environment";
 import { Post } from './post.model';
+
+const BACKEND_URL = environment.apiUrl + 'posts/';
 
 @Injectable({providedIn: 'root'})
 
 export class PostService {
   private posts: Post[] = [];
   private postsUpdated = new Subject<{ posts: Post[], postCount: number }>();
-  postURL = 'http://localhost:3000/api/posts';
 
   constructor(private http: HttpClient,
               private router: Router) {}
@@ -25,7 +27,7 @@ export class PostService {
     // the get method also extracts and formats the JSON data so we can use it with javascript!
     this.http
           // using any instead of Posts[] because of the key mismatch
-      .get<{ message: string, posts: any, maxPosts: number }>(this.postURL + queryParams)
+      .get<{ message: string, posts: any, maxPosts: number }>(BACKEND_URL + queryParams)
       .pipe(
         map((postData) => {         // rxjs will wrap this in an observable for the upcoming subscription
           return {
@@ -61,7 +63,7 @@ export class PostService {
   getPost (id: string) {
     // Cannot use this know, because you cannot return an asynchronous action in a subscription
     // return {...this.posts.find(p => p.id === id)};
-    return this.http.get<{ _id: string, title: string, content: string, imagePath: string, creator: string }>(this.postURL + "/" + id);
+    return this.http.get<{ _id: string, title: string, content: string, imagePath: string, creator: string }>(BACKEND_URL + id);
   }
 
   addPost(title: string, content: string, image: File) {
@@ -73,7 +75,7 @@ export class PostService {
     postData.append('image', image, title);
     this.http
       .post<{message: string, post: Post}>( // get a post now, instead of a postId
-        this.postURL,
+        BACKEND_URL,
         postData
       )
       .subscribe((responseData) => {
@@ -122,7 +124,7 @@ export class PostService {
       };
     }
     this.http
-      .put(this.postURL + "/" + id, postData)
+      .put(BACKEND_URL + id, postData)
       .subscribe(response => {
         // Everything is handled in ngOnInit, because we are navigating back to the list,
         //      so we don't need it all here!!!
@@ -142,7 +144,7 @@ export class PostService {
   }
 
   deletePost(postId: string) {
-    return this.http.delete(this.postURL + "/" + postId);
+    return this.http.delete(BACKEND_URL + postId);
       // Better to return the http call and subscribe in the post-list component instead
       // .subscribe(() => {
       //   // console.log('Deleted!');
